@@ -49,13 +49,13 @@ The binary will be at:
 Start a server:
 
 ```bash
-./scala-scanner server --ports 9000-9002 --host 127.0.0.1
+sbt "run server --ports 9000-9002 --host 127.0.0.1"
 ```
 
 Scan from another terminal:
 
 ```bash
-./scala-scanner client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500
+sbt "run client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500"
 ```
 ---
 
@@ -81,20 +81,20 @@ Scan from another terminal:
 ### TCP scan (default)
 
 ```bash
-./scala-scanner server --ports 9000-9002 --host 127.0.0.1
-./scala-scanner client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500
+sbt "run server --ports 9000-9002 --host 127.0.0.1"
+sbt "run client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500"
 ```
 
 ### UDP scan
 
 ```bash
-./target/scala-3.3.3/scala-scanner server --ports 9000-9002 --host 127.0.0.1 --protocol udp
-./target/scala-3.3.3/scala-scanner client --ports 9000-9002 --host 127.0.0.1 --protocol udp --timeout-ms 500
+sbt "run server --ports 9000-9002 --host 127.0.0.1 --protocol udp"
+sbt "run client --ports 9000-9002 --host 127.0.0.1 --protocol udp --timeout-ms 500"
 ```
 
 ### IPv6
 
 ```bash
-./target/scala-3.3.3/scala-scanner server --ports 9000-9002 --host ::1 --ip ipv6
-./target/scala-3.3.3/scala-scanner client --ports 9000-9002 --host ::1 --ip ipv6 --timeout-ms 500
+sbt "run server --ports 9000-9002 --host ::1 --ip ipv6"
+sbt "run client --ports 9000-9002 --host ::1 --ip ipv6 --timeout-ms 500"
 ```
