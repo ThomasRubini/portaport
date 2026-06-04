@@ -78,6 +78,13 @@ Scan from another terminal:
 
 ## Examples
 
+### TCP scan (default)
+
+```bash
+./scala-scanner server --ports 9000-9002 --host 127.0.0.1
+./scala-scanner client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500
+```
+
 ### UDP scan
 
 ```bash
@@ -90,10 +97,4 @@ Scan from another terminal:
 ```bash
 ./target/scala-3.3.3/scala-scanner server --ports 9000-9002 --host ::1 --ip ipv6
 ./target/scala-3.3.3/scala-scanner client --ports 9000-9002 --host ::1 --ip ipv6 --timeout-ms 500
-```
-
-### IP reachability check
-
-```bash
-./target/scala-3.3.3/scala-scanner client --host 127.0.0.1 --protocol ip --timeout-ms 500 --ip ipv4
 ```
