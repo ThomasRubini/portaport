@@ -1,0 +1,13 @@
+{
+  "name": "scala-scanner",
+  "image": "mcr.microsoft.com/devcontainers/scala:1-17",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "scalameta.metals",
+        "scala-lang.scala"
+      ]
+    }
+  },
+  "postCreateCommand": "sbt compile"
+}
