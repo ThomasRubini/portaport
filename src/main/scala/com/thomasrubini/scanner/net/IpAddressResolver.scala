@@ -9,10 +9,11 @@ import scala.util.Try
 object IpAddressResolver:
   /** Resolves the host to an IP address matching the requested IP version. */
   def resolve(host: String, ipVersion: IpVersion): Either[String, InetAddress] =
-    Try(InetAddress.getAllByName(host).toList).toEither.left.map(_.getMessage).flatMap { addresses =>
-      addresses
-        .find(address => matches(address, ipVersion))
-        .toRight(s"No ${ipVersion.toString.toLowerCase} address found for host '$host'")
+    Try(InetAddress.getAllByName(host).toList).toEither.left.map(_.getMessage).flatMap {
+      addresses =>
+        addresses
+          .find(address => matches(address, ipVersion))
+          .toRight(s"No ${ipVersion.toString.toLowerCase} address found for host '$host'")
     }
 
   /** Checks whether an InetAddress belongs to the requested IP family. */

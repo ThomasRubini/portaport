@@ -1,6 +1,9 @@
 package com.thomasrubini.scanner
 
 import com.thomasrubini.scanner.client.EchoClient
+import com.thomasrubini.scanner.client.ScanResult
+import com.thomasrubini.scanner.cli.Transport
+import com.thomasrubini.scanner.cli.IpVersion
 import com.thomasrubini.scanner.server.EchoServer
 import com.thomasrubini.scanner.cli.Transport
 import com.thomasrubini.scanner.cli.IpVersion
@@ -22,15 +25,28 @@ final class EchoIntegrationSuite extends FunSuite:
 
     try
       assertEquals(report.startedPorts, List(openPort))
-      val detected = EchoClient.scanOpenPorts("127.0.0.1", List(openPort), timeoutMs = 300, Transport.Tcp, IpVersion.V4)
-      assertEquals(detected, Right(List(openPort)))
+      val Right(ScanResult(openPorts, _)) = EchoClient.scanOpenPorts(
+        "127.0.0.1",
+        List(openPort),
+        timeoutMs = 300,
+        Transport.Tcp,
+        IpVersion.V4
+      )
+      assertEquals(openPorts, List(openPort))
     finally server.stop()
   }
 
   test("client excludes closed port") {
     val closedPort = findFreePort()
-    val detected = EchoClient.scanOpenPorts("127.0.0.1", List(closedPort), timeoutMs = 200, Transport.Tcp, IpVersion.V4)
-    assertEquals(detected, Right(Nil))
+    val Right(ScanResult(openPorts, closedPorts)) = EchoClient.scanOpenPorts(
+      "127.0.0.1",
+      List(closedPort),
+      timeoutMs = 200,
+      Transport.Tcp,
+      IpVersion.V4
+    )
+    assertEquals(openPorts, Nil)
+    assertEquals(closedPorts, List(closedPort))
   }
 
   test("server handles concurrent probes") {
@@ -40,10 +56,18 @@ final class EchoIntegrationSuite extends FunSuite:
 
     try
       val scans = Future.traverse(1 to 20)(_ =>
-        Future(EchoClient.scanOpenPorts("127.0.0.1", List(openPort), timeoutMs = 300, Transport.Tcp, IpVersion.V4))
+        Future(
+          EchoClient.scanOpenPorts(
+            "127.0.0.1",
+            List(openPort),
+            timeoutMs = 300,
+            Transport.Tcp,
+            IpVersion.V4
+          )
+        )
       )
       val results = Await.result(scans, 10.seconds)
-      assert(results.forall(_ == Right(List(openPort))))
+      assert(results.forall { case Right(ScanResult(openPorts, _)) => openPorts == List(openPort) })
     finally server.stop()
   }
 
