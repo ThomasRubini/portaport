@@ -24,28 +24,31 @@ final class EchoIntegrationSuite extends FunSuite:
 
     try
       assertEquals(report.startedPorts, List(openPort))
-      val Right(ScanResult(openPorts, _)) = EchoClient.scanOpenPorts(
+      EchoClient.scanOpenPorts(
         "127.0.0.1",
         List(openPort),
         timeoutMs = 300,
         Transport.Tcp,
         IpVersion.V4
-      )
-      assertEquals(openPorts, List(openPort))
+      ) match
+        case Right(ScanResult(openPorts, _)) => assertEquals(openPorts, List(openPort))
+        case Left(error)                     => fail(error)
     finally server.stop()
   }
 
   test("client excludes closed port") {
     val closedPort = findFreePort()
-    val Right(ScanResult(openPorts, closedPorts)) = EchoClient.scanOpenPorts(
+    EchoClient.scanOpenPorts(
       "127.0.0.1",
       List(closedPort),
       timeoutMs = 200,
       Transport.Tcp,
       IpVersion.V4
-    )
-    assertEquals(openPorts, Nil)
-    assertEquals(closedPorts, List(closedPort))
+    ) match
+      case Right(ScanResult(openPorts, closedPorts)) =>
+        assertEquals(openPorts, Nil)
+        assertEquals(closedPorts, List(closedPort))
+      case Left(error) => fail(error)
   }
 
   test("server handles concurrent probes") {
@@ -66,7 +69,10 @@ final class EchoIntegrationSuite extends FunSuite:
         )
       )
       val results = Await.result(scans, 10.seconds)
-      assert(results.forall { case Right(ScanResult(openPorts, _)) => openPorts == List(openPort) })
+      assert(results.forall {
+        case Right(ScanResult(openPorts, _)) => openPorts == List(openPort)
+        case Left(_)                         => false
+      })
     finally server.stop()
   }
 
