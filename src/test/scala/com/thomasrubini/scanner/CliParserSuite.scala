@@ -1,7 +1,7 @@
 package com.thomasrubini.scanner
 
 import com.thomasrubini.scanner.cli.CliParser
-import com.thomasrubini.scanner.cli.CliParser.Command
+import com.thomasrubini.scanner.cli.Command
 import com.thomasrubini.scanner.cli.IpVersion
 import com.thomasrubini.scanner.cli.PortRange
 import com.thomasrubini.scanner.cli.Transport

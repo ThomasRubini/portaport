@@ -9,6 +9,8 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.Socket
 import com.thomasrubini.scanner.net.SocketIo
+import scala.sys.process.Process
+import scala.sys.process.ProcessLogger
 import scala.util.Using
 
 case class ScanResult(open: List[Int], closed: List[Int])
@@ -16,13 +18,28 @@ case class ScanResult(open: List[Int], closed: List[Int])
 object EchoClient:
   private val ProbePayload = "scala-scanner-probe".getBytes("UTF-8")
 
-  /** Checks host reachability at IP level for the selected address family. */
+  /** Checks host reachability at IP level using the system ping command. */
   def checkIpReachable(
       host: String,
       timeoutMs: Int,
       ipVersion: IpVersion
   ): Either[String, Boolean] =
-    IpAddressResolver.resolve(host, ipVersion).map(_.isReachable(timeoutMs))
+    val addressFlag = ipVersion match
+      case IpVersion.V4 => "-4"
+      case IpVersion.V6 => "-6"
+    val isWindows = System.getProperty("os.name").toLowerCase.contains("windows")
+    val args =
+      if isWindows then
+        Seq("ping", "-n", "1", "-w", timeoutMs.toString, host)
+      else
+        val timeoutSec = (timeoutMs / 1000).max(1)
+        Seq("ping", addressFlag, "-c", "1", "-W", timeoutSec.toString, host)
+    try
+      val exitCode = Process(args).run(ProcessLogger(_ => ())).exitValue()
+      Right(exitCode == 0)
+    catch
+      case e: Exception =>
+        Left(s"Failed to check reachability for '$host': ${e.getMessage}")
 
   /** Scans ports and returns those that complete the requested protocol probe. */
   def scanOpenPorts(
