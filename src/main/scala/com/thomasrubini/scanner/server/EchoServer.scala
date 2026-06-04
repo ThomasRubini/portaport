@@ -58,6 +58,8 @@ final class EchoServer(host: String, ports: List[Int], transport: Transport, ipV
                   new Runnable:
                     override def run(): Unit = udpLoop(socket)
                 )
+              case Transport.Ip =>
+                failures.put(port, "server does not support --protocol ip")
           catch
             case exception: Exception =>
               failures.put(port, exception.getMessage)

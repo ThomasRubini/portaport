@@ -2,6 +2,8 @@ package com.thomasrubini.scanner
 
 import com.thomasrubini.scanner.client.EchoClient
 import com.thomasrubini.scanner.server.EchoServer
+import com.thomasrubini.scanner.cli.Transport
+import com.thomasrubini.scanner.cli.IpVersion
 import munit.FunSuite
 
 import java.net.ServerSocket
@@ -15,33 +17,33 @@ final class EchoIntegrationSuite extends FunSuite:
 
   test("client finds open echo port") {
     val openPort = findFreePort()
-    val server = EchoServer("127.0.0.1", List(openPort))
+    val server = EchoServer("127.0.0.1", List(openPort), Transport.Tcp, IpVersion.V4)
     val report = server.start()
 
     try
       assertEquals(report.startedPorts, List(openPort))
-      val detected = EchoClient.scanOpenPorts("127.0.0.1", List(openPort), timeoutMs = 300)
-      assertEquals(detected, List(openPort))
+      val detected = EchoClient.scanOpenPorts("127.0.0.1", List(openPort), timeoutMs = 300, Transport.Tcp, IpVersion.V4)
+      assertEquals(detected, Right(List(openPort)))
     finally server.stop()
   }
 
   test("client excludes closed port") {
     val closedPort = findFreePort()
-    val detected = EchoClient.scanOpenPorts("127.0.0.1", List(closedPort), timeoutMs = 200)
-    assertEquals(detected, Nil)
+    val detected = EchoClient.scanOpenPorts("127.0.0.1", List(closedPort), timeoutMs = 200, Transport.Tcp, IpVersion.V4)
+    assertEquals(detected, Right(Nil))
   }
 
   test("server handles concurrent probes") {
     val openPort = findFreePort()
-    val server = EchoServer("127.0.0.1", List(openPort))
+    val server = EchoServer("127.0.0.1", List(openPort), Transport.Tcp, IpVersion.V4)
     server.start()
 
     try
       val scans = Future.traverse(1 to 20)(_ =>
-        Future(EchoClient.scanOpenPorts("127.0.0.1", List(openPort), timeoutMs = 300))
+        Future(EchoClient.scanOpenPorts("127.0.0.1", List(openPort), timeoutMs = 300, Transport.Tcp, IpVersion.V4))
       )
       val results = Await.result(scans, 10.seconds)
-      assert(results.forall(_ == List(openPort)))
+      assert(results.forall(_ == Right(List(openPort))))
     finally server.stop()
   }
 
