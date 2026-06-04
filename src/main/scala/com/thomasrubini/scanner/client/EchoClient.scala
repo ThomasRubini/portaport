@@ -102,9 +102,8 @@ object EchoClient:
   private def isUdpEchoOpen(address: InetAddress, port: Int, timeoutMs: Int): Boolean =
     Using(new DatagramSocket()) { socket =>
       socket.setSoTimeout(timeoutMs)
-      socket.connect(InetSocketAddress(address, port))
 
-      val outbound = DatagramPacket(ProbePayload, ProbePayload.length)
+      val outbound = DatagramPacket(ProbePayload, ProbePayload.length, address, port)
       socket.send(outbound)
 
       val inboundBuffer = Array.ofDim[Byte](ProbePayload.length)
