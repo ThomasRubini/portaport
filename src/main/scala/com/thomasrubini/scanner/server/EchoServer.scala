@@ -11,7 +11,6 @@ import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -22,7 +21,6 @@ final case class ServerStartReport(startedPorts: List[Int], failedPorts: Map[Int
 final class EchoServer(host: String, ports: List[Int], transport: Transport, ipVersion: IpVersion):
   private val ReadTimeoutMs = 1000
   private val running = AtomicBoolean(false)
-  private val stopSignal = CountDownLatch(1)
   private val tcpListeners = ConcurrentHashMap[Int, ServerSocket]()
   private val udpListeners = ConcurrentHashMap[Int, DatagramSocket]()
   private val acceptorPool = Executors.newCachedThreadPool()
@@ -58,6 +56,9 @@ final class EchoServer(host: String, ports: List[Int], transport: Transport, ipV
                   new Runnable:
                     override def run(): Unit = udpLoop(socket)
                 )
+              case Transport.Ip =>
+                val msg = s"Port $port: IP protocol not supported for echo server"
+                failures.put(port, msg)
           catch
             case exception: Exception =>
               failures.put(port, exception.getMessage)
@@ -70,7 +71,9 @@ final class EchoServer(host: String, ports: List[Int], transport: Transport, ipV
 
   /** Blocks until a stop signal is received. */
   def awaitTermination(): Unit =
-    stopSignal.await()
+    while running.get() do
+      try Thread.sleep(1000)
+      catch case _: InterruptedException => ()
 
   /** Stops listeners and worker pools. */
   def stop(): Unit =
@@ -87,7 +90,6 @@ final class EchoServer(host: String, ports: List[Int], transport: Transport, ipV
       udpListeners.clear()
       shutdownExecutor(acceptorPool)
       shutdownExecutor(connectionPool)
-      stopSignal.countDown()
 
   /** Accepts TCP connections and dispatches each one for echo handling. */
   private def acceptLoop(serverSocket: ServerSocket): Unit =

@@ -54,6 +54,7 @@ object EchoClient:
     transport match
       case Transport.Tcp => isTcpEchoOpen(address, port, timeoutMs)
       case Transport.Udp => isUdpEchoOpen(address, port, timeoutMs)
+      case Transport.Ip  => false
 
   /** Executes the TCP echo probe on a single target port. */
   private def isTcpEchoOpen(address: InetAddress, port: Int, timeoutMs: Int): Boolean =
