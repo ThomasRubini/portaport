@@ -3,10 +3,14 @@ package com.thomasrubini.scanner.cli
 sealed trait Command
 
 object Command:
-  final case class Server(ports: PortRange, host: String, transport: Transport, ipVersion: IpVersion)
-      extends Command
+  final case class Server(
+      ports: PortRange,
+      host: String,
+      transport: Transport,
+      ipVersion: IpVersion
+  ) extends Command
   final case class Client(
-    ports: Option[PortRange],
+      ports: Option[PortRange],
       host: String,
       timeoutMs: Int,
       transport: Transport,
@@ -21,7 +25,7 @@ object Transport:
     value.toLowerCase match
       case "tcp" => Right(Transport.Tcp)
       case "udp" => Right(Transport.Udp)
-      case "ip" => Right(Transport.Ip)
+      case "ip"  => Right(Transport.Ip)
       case _     => Left(s"Invalid protocol: '$value'. Expected one of: tcp, udp, ip")
 
 enum IpVersion:
@@ -32,7 +36,7 @@ object IpVersion:
     value.toLowerCase match
       case "ipv4" | "4" => Right(IpVersion.V4)
       case "ipv6" | "6" => Right(IpVersion.V6)
-      case _               => Left(s"Invalid IP version: '$value'. Expected one of: ipv4, ipv6")
+      case _            => Left(s"Invalid IP version: '$value'. Expected one of: ipv4, ipv6")
 
 object CliParser:
   private val DefaultHost = "127.0.0.1"
@@ -87,7 +91,7 @@ object CliParser:
           case Transport.Ip => Right(None)
           case _ =>
             opts.get("--ports") match
-              case None => Left("Missing required option --ports for tcp/udp scan")
+              case None           => Left("Missing required option --ports for tcp/udp scan")
               case Some(portsRaw) => PortRange.parse(portsRaw).map(Some(_))
       yield Command.Client(
         ports = ports,

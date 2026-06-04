@@ -123,7 +123,8 @@ final class EchoServer(host: String, ports: List[Int], transport: Transport, ipV
         val packet = DatagramPacket(buffer, buffer.length)
         socket.receive(packet)
 
-        val outbound = DatagramPacket(packet.getData, packet.getLength, packet.getAddress, packet.getPort)
+        val outbound =
+          DatagramPacket(packet.getData, packet.getLength, packet.getAddress, packet.getPort)
         socket.send(outbound)
       catch
         case _: java.net.SocketException => ()

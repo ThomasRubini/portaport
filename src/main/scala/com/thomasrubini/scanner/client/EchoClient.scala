@@ -11,11 +11,17 @@ import java.net.Socket
 import com.thomasrubini.scanner.net.SocketIo
 import scala.util.Using
 
+case class ScanResult(open: List[Int], closed: List[Int])
+
 object EchoClient:
   private val ProbePayload = "scala-scanner-probe".getBytes("UTF-8")
 
   /** Checks host reachability at IP level for the selected address family. */
-  def checkIpReachable(host: String, timeoutMs: Int, ipVersion: IpVersion): Either[String, Boolean] =
+  def checkIpReachable(
+      host: String,
+      timeoutMs: Int,
+      ipVersion: IpVersion
+  ): Either[String, Boolean] =
     IpAddressResolver.resolve(host, ipVersion).map(_.isReachable(timeoutMs))
 
   /** Scans ports and returns those that complete the requested protocol probe. */
@@ -24,19 +30,27 @@ object EchoClient:
       ports: List[Int],
       timeoutMs: Int,
       transport: Transport,
-      ipVersion: IpVersion
-  ): Either[String, List[Int]] =
+      ipVersion: IpVersion,
+      onProgress: (Int, Int) => Unit = (_, _) => ()
+  ): Either[String, ScanResult] =
     IpAddressResolver.resolve(host, ipVersion) match
       case Left(error) => Left(error)
       case Right(address) =>
-        Right(
-          ports
-            .filter(port => isEchoOpen(address, port, timeoutMs, transport))
-            .sorted
-        )
+        val total = ports.size
+        val checked = ports.map { port =>
+          onProgress(port, total)
+          port -> isEchoOpen(address, port, timeoutMs, transport)
+        }
+        val (open, closed) = checked.partition(_._2)
+        Right(ScanResult(open.map(_._1).sorted, closed.map(_._1).sorted))
 
   /** Checks whether a single port answers the configured protocol echo probe. */
-  private def isEchoOpen(address: InetAddress, port: Int, timeoutMs: Int, transport: Transport): Boolean =
+  private def isEchoOpen(
+      address: InetAddress,
+      port: Int,
+      timeoutMs: Int,
+      transport: Transport
+  ): Boolean =
     transport match
       case Transport.Tcp => isTcpEchoOpen(address, port, timeoutMs)
       case Transport.Udp => isUdpEchoOpen(address, port, timeoutMs)
