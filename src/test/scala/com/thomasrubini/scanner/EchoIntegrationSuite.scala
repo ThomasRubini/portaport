@@ -1,12 +1,10 @@
 package com.thomasrubini.scanner
 
+import com.thomasrubini.scanner.cli.IpVersion
+import com.thomasrubini.scanner.cli.Transport
 import com.thomasrubini.scanner.client.EchoClient
 import com.thomasrubini.scanner.client.ScanResult
-import com.thomasrubini.scanner.cli.Transport
-import com.thomasrubini.scanner.cli.IpVersion
 import com.thomasrubini.scanner.server.EchoServer
-import com.thomasrubini.scanner.cli.Transport
-import com.thomasrubini.scanner.cli.IpVersion
 import munit.FunSuite
 
 import java.net.ServerSocket
