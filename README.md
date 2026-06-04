@@ -1,99 +1,98 @@
 # scala-scanner
 
-![CI](https://github.com/ThomasRubini/scala-scanner/actions/workflows/ci.yml/badge.svg)
+A Scala CLI with two modes:
+- `server` - listens on a TCP/UDP port range and echoes payloads
+- `client` - scans a TCP/UDP port range and prints reachable ports
 
-A Scala 3 CLI with two modes:
-- `server`: listens on a TCP/UDP port range and echoes payloads.
-- `client`: scans a TCP/UDP port range and prints reachable ports.
+Supports IPv4 and IPv6. Client also supports IP reachability checks.
 
-Supports `ipv4` and `ipv6`. Client also supports IP reachability with `--protocol ip`.
+---
 
-# Usage
+## Build
 
-## Quickstart
+Requirements:
+- JDK 17 or later
+- sbt 1.10 or later
+- `clang` and `lld` (required for native build)
 
-1. Start server in one terminal:
+### Native build (recommended)
 
-```bash
-sbt "run server --ports 9000-9002 --host 127.0.0.1"
-```
+A native binary builds quickly and runs faster than JVM mode.
 
-2. Scan from another terminal:
+Install the toolchain:
 
-```bash
-sbt "run client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500"
-```
-
-Expected output (one open port per line):
-
-```text
-9000
-9001
-9002
-```
-
-## Advanced usage
-
-UDP example:
-
-```bash
-sbt "run server --ports 9000-9002 --host 127.0.0.1 --protocol udp"
-sbt "run client --ports 9000-9002 --host 127.0.0.1 --protocol udp --timeout-ms 500"
-```
-
-IPv6 example:
-
-```bash
-sbt "run server --ports 9000-9002 --host ::1 --ip ipv6"
-sbt "run client --ports 9000-9002 --host ::1 --ip ipv6 --timeout-ms 500"
-```
-
-IP-level check (no ports):
-
-```bash
-sbt "run client --host 127.0.0.1 --protocol ip --timeout-ms 500 --ip ipv4"
-```
-
-Example output:
-
-```text
-reachable
-```
-
-```text
-9000
-9001
-9002
-```
-
-# Build
-
-## Requirements
-- JDK 17+
-- sbt 1.10+
-- for native build (Linux): `clang` and `lld`
-
-
-## Native build
-
-Install toolchain (Linux):
-
+On Linux:
 ```bash
 sudo apt-get update
 sudo apt-get install -y clang lld
 ```
 
-Build native binary:
+On macOS, clang is included with Xcode command line tools:
+```bash
+xcode-select --install
+```
+
+Build:
 
 ```bash
 sbt clean nativeLink
 ```
 
-Binary output:
-- `target/scala-3.3.3/scala-scanner` (Linux/macOS)
+The binary will be at:
+- `target/scala-3.3.3/scala-scanner` (Linux / macOS)
 - `target/scala-3.3.3/scala-scanner.exe` (Windows)
 
-Run native binary:
+---
+
+## Quickstart
+
+Start a server:
+
+```bash
+./scala-scanner server --ports 9000-9002 --host 127.0.0.1
+```
+
+Scan from another terminal:
+
+```bash
+./scala-scanner client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500
+```
+---
+
+## All Options
+
+### Server
+- `--host <addr>` - bind address (default: 127.0.0.1)
+- `--ports <range>` - port range, e.g. `9000-9010` (required)
+- `--protocol <tcp|udp>` - protocol (default: tcp)
+- `--ip <ipv4|ipv6>` - IP version (default: ipv4)
+
+### Client
+- `--host <addr>` - target address (required for port scan)
+- `--ports <range>` - port range, e.g. `9000-9010`
+- `--protocol <tcp|udp|ip>` - protocol (default: tcp)
+- `--ip <ipv4|ipv6>` - IP version (default: ipv4)
+- `--timeout-ms <ms>` - timeout in milliseconds (default: 1000)
+
+---
+
+## Examples
+
+### UDP scan
+
+```bash
+./target/scala-3.3.3/scala-scanner server --ports 9000-9002 --host 127.0.0.1 --protocol udp
+./target/scala-3.3.3/scala-scanner client --ports 9000-9002 --host 127.0.0.1 --protocol udp --timeout-ms 500
+```
+
+### IPv6
+
+```bash
+./target/scala-3.3.3/scala-scanner server --ports 9000-9002 --host ::1 --ip ipv6
+./target/scala-3.3.3/scala-scanner client --ports 9000-9002 --host ::1 --ip ipv6 --timeout-ms 500
+```
+
+### IP reachability check
 
 ```bash
 ./target/scala-3.3.3/scala-scanner client --host 127.0.0.1 --protocol ip --timeout-ms 500 --ip ipv4
