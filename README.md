@@ -46,6 +46,11 @@ The binary will be at:
 - `target/scala-3.3.3/scala-scanner` (Linux / macOS)
 - `target/scala-3.3.3/scala-scanner.exe` (Windows)
 
+For convenience, copy it to the project root:
+```bash
+cp target/scala-3.3.3/scala-scanner .
+```
+
 ---
 
 ## Quickstart
@@ -53,13 +58,13 @@ The binary will be at:
 Start a server:
 
 ```bash
-./target/scala-3.3.3/scala-scanner server --ports 9000-9002 --host 127.0.0.1
+./scala-scanner server --ports 9000-9002 --host 127.0.0.1
 ```
 
 Scan from another terminal:
 
 ```bash
-./target/scala-3.3.3/scala-scanner client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500
+./scala-scanner client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500
 ```
 ---
 
@@ -86,6 +91,7 @@ Scan from another terminal:
 
 ```bash
 ./scala-scanner server --ports 9000-9002 --host 127.0.0.1
+# or: ./target/scala-3.3.3/scala-scanner server --ports 9000-9002 --host 127.0.0.1
 ./scala-scanner client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500
 ```
 
@@ -107,4 +113,11 @@ Scan from another terminal:
 
 ```bash
 ./scala-scanner client --host 127.0.0.1 --protocol ip --timeout-ms 500 --ip ipv4
+```
+
+### Via sbt (no native build)
+
+```bash
+sbt "run server --ports 9000-9002 --host 127.0.0.1"
+sbt "run client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500"
 ```
