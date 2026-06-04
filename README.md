@@ -1,14 +1,11 @@
 # scala-scanner
 
-A port scanner and echo server built with Scala Native.
+A Scala CLI with two modes:
 
-## Features
+    server - listens on a TCP/UDP port range and echoes payloads
+    client - scans a TCP/UDP port range and prints reachable ports
 
-- **Echo server** — listens on TCP or UDP ports and echoes any received payload
-- **Port scanner** — detects open ports by sending a probe and verifying the echo response
-- **Protocols** — TCP and UDP scanning, plus IP-level reachability via `ping`
-- **Dual stack** — full IPv4 and IPv6 support, with per-family address resolution
-- **Cross-platform** — works on Linux, macOS, and Windows (ping adapted per OS)
+Supports IPv4 and IPv6. Client also supports IP reachability checks.
 
 ---
 
