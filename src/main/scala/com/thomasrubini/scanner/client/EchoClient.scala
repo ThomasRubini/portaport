@@ -9,6 +9,10 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.Socket
 import com.thomasrubini.scanner.net.SocketIo
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 import scala.sys.process.Process
 import scala.sys.process.ProcessLogger
 import scala.util.Using
@@ -16,7 +20,9 @@ import scala.util.Using
 case class ScanResult(open: List[Int], closed: List[Int])
 
 object EchoClient:
+  private given ExecutionContext = ExecutionContext.global
   private val ProbePayload = "scala-scanner-probe".getBytes("UTF-8")
+  private val MaxConcurrency = 50
 
   /** Checks host reachability at IP level using the system ping command. */
   def checkIpReachable(
@@ -54,10 +60,14 @@ object EchoClient:
       case Left(error) => Left(error)
       case Right(address) =>
         val total = ports.size
-        val checked = ports.map { port =>
-          onProgress(port, total)
-          port -> isEchoOpen(address, port, timeoutMs, transport)
+        val batched = ports.grouped(MaxConcurrency).toList
+        val futures = batched.map { batch =>
+          Future.traverse(batch) { port =>
+            onProgress(port, total)
+            Future(port -> isEchoOpen(address, port, timeoutMs, transport))
+          }
         }
+        val checked = futures.map(Await.result(_, Duration.Inf)).flatten
         val (open, closed) = checked.partition(_._2)
         Right(ScanResult(open.map(_._1).sorted, closed.map(_._1).sorted))
 
@@ -70,8 +80,8 @@ object EchoClient:
   ): Boolean =
     transport match
       case Transport.Tcp => isTcpEchoOpen(address, port, timeoutMs)
-      case Transport.Udp => isUdpEchoOpen(address, port, timeoutMs)
-      case Transport.Ip  => false
+      case Transport.Udp => isUdpEchoOpenWithRetry(address, port, timeoutMs)
+      case _ => throw new AssertionError("Unexpected transport")
 
   /** Executes the TCP echo probe on a single target port. */
   private def isTcpEchoOpen(address: InetAddress, port: Int, timeoutMs: Int): Boolean =
@@ -92,9 +102,8 @@ object EchoClient:
   private def isUdpEchoOpen(address: InetAddress, port: Int, timeoutMs: Int): Boolean =
     Using(new DatagramSocket()) { socket =>
       socket.setSoTimeout(timeoutMs)
-      socket.connect(InetSocketAddress(address, port))
 
-      val outbound = DatagramPacket(ProbePayload, ProbePayload.length)
+      val outbound = DatagramPacket(ProbePayload, ProbePayload.length, address, port)
       socket.send(outbound)
 
       val inboundBuffer = Array.ofDim[Byte](ProbePayload.length)
@@ -104,3 +113,6 @@ object EchoClient:
       val received = inbound.getData.take(inbound.getLength)
       received.sameElements(ProbePayload)
     }.getOrElse(false)
+
+  private def isUdpEchoOpenWithRetry(address: InetAddress, port: Int, timeoutMs: Int): Boolean =
+    (1 to 3).exists(_ => isUdpEchoOpen(address, port, timeoutMs))

@@ -1,8 +1,9 @@
 # scala-scanner
 
 A Scala CLI with two modes:
-- `server` - listens on a TCP/UDP port range and echoes payloads
-- `client` - scans a TCP/UDP port range and prints reachable ports
+
+- server - listens on a TCP/UDP port range and echoes payloads
+- client - scans a TCP/UDP port range and prints reachable ports
 
 Supports IPv4 and IPv6. Client also supports IP reachability checks.
 
@@ -42,6 +43,11 @@ The binary will be at:
 - `target/scala-3.3.3/scala-scanner` (Linux / macOS)
 - `target/scala-3.3.3/scala-scanner.exe` (Windows)
 
+For convenience, copy it to the project root:
+```bash
+cp target/scala-3.3.3/scala-scanner .
+```
+
 ---
 
 ## Quickstart
@@ -49,13 +55,13 @@ The binary will be at:
 Start a server:
 
 ```bash
-sbt "run server --ports 9000-9002 --host 127.0.0.1"
+./scala-scanner server --ports 9000-9002 --host 127.0.0.1
 ```
 
 Scan from another terminal:
 
 ```bash
-sbt "run client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500"
+./scala-scanner client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500
 ```
 ---
 
@@ -81,20 +87,34 @@ sbt "run client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500"
 ### TCP scan (default)
 
 ```bash
-sbt "run server --ports 9000-9002 --host 127.0.0.1"
-sbt "run client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500"
+./scala-scanner server --ports 9000-9002 --host 127.0.0.1
+# or: ./target/scala-3.3.3/scala-scanner server --ports 9000-9002 --host 127.0.0.1
+./scala-scanner client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500
 ```
 
 ### UDP scan
 
 ```bash
-sbt "run server --ports 9000-9002 --host 127.0.0.1 --protocol udp"
-sbt "run client --ports 9000-9002 --host 127.0.0.1 --protocol udp --timeout-ms 500"
+./scala-scanner server --ports 9000-9002 --host 127.0.0.1 --protocol udp
+./scala-scanner client --ports 9000-9002 --host 127.0.0.1 --protocol udp --timeout-ms 500
 ```
 
 ### IPv6
 
 ```bash
-sbt "run server --ports 9000-9002 --host ::1 --ip ipv6"
-sbt "run client --ports 9000-9002 --host ::1 --ip ipv6 --timeout-ms 500"
+./scala-scanner server --ports 9000-9002 --host ::1 --ip ipv6
+./scala-scanner client --ports 9000-9002 --host ::1 --ip ipv6 --timeout-ms 500
+```
+
+### IP reachability check
+
+```bash
+./scala-scanner client --host 127.0.0.1 --protocol ip --timeout-ms 500 --ip ipv4
+```
+
+### Via sbt (no native build)
+
+```bash
+sbt "run server --ports 9000-9002 --host 127.0.0.1"
+sbt "run client --ports 9000-9002 --host 127.0.0.1 --timeout-ms 500"
 ```
