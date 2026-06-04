@@ -1,6 +1,12 @@
 package com.thomasrubini.scanner.client
 
+import com.thomasrubini.scanner.cli.IpVersion
+import com.thomasrubini.scanner.cli.Transport
+import com.thomasrubini.scanner.net.IpAddressResolver
 import java.net.InetSocketAddress
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
 import java.net.Socket
 import com.thomasrubini.scanner.net.SocketIo
 import scala.util.Using
@@ -8,12 +14,37 @@ import scala.util.Using
 object EchoClient:
   private val ProbePayload = "scala-scanner-probe".getBytes("UTF-8")
 
-  def scanOpenPorts(host: String, ports: List[Int], timeoutMs: Int): List[Int] =
-    ports.filter(port => isEchoOpen(host, port, timeoutMs)).sorted
+  /** Checks host reachability at IP level for the selected address family. */
+  def checkIpReachable(host: String, timeoutMs: Int, ipVersion: IpVersion): Either[String, Boolean] =
+    IpAddressResolver.resolve(host, ipVersion).map(_.isReachable(timeoutMs))
 
-  private def isEchoOpen(host: String, port: Int, timeoutMs: Int): Boolean =
+  /** Scans ports and returns those that complete the requested protocol probe. */
+  def scanOpenPorts(
+      host: String,
+      ports: List[Int],
+      timeoutMs: Int,
+      transport: Transport,
+      ipVersion: IpVersion
+  ): Either[String, List[Int]] =
+    IpAddressResolver.resolve(host, ipVersion) match
+      case Left(error) => Left(error)
+      case Right(address) =>
+        Right(
+          ports
+            .filter(port => isEchoOpen(address, port, timeoutMs, transport))
+            .sorted
+        )
+
+  /** Checks whether a single port answers the configured protocol echo probe. */
+  private def isEchoOpen(address: InetAddress, port: Int, timeoutMs: Int, transport: Transport): Boolean =
+    transport match
+      case Transport.Tcp => isTcpEchoOpen(address, port, timeoutMs)
+      case Transport.Udp => isUdpEchoOpen(address, port, timeoutMs)
+
+  /** Executes the TCP echo probe on a single target port. */
+  private def isTcpEchoOpen(address: InetAddress, port: Int, timeoutMs: Int): Boolean =
     Using(new Socket()) { socket =>
-      socket.connect(InetSocketAddress(host, port), timeoutMs)
+      socket.connect(InetSocketAddress(address, port), timeoutMs)
       socket.setSoTimeout(timeoutMs)
 
       val output = socket.getOutputStream
@@ -23,4 +54,21 @@ object EchoClient:
 
       val echoed = SocketIo.readAll(socket.getInputStream)
       echoed.sameElements(ProbePayload)
+    }.getOrElse(false)
+
+  /** Executes the UDP echo probe on a single target port. */
+  private def isUdpEchoOpen(address: InetAddress, port: Int, timeoutMs: Int): Boolean =
+    Using(new DatagramSocket()) { socket =>
+      socket.setSoTimeout(timeoutMs)
+      socket.connect(InetSocketAddress(address, port))
+
+      val outbound = DatagramPacket(ProbePayload, ProbePayload.length)
+      socket.send(outbound)
+
+      val inboundBuffer = Array.ofDim[Byte](ProbePayload.length)
+      val inbound = DatagramPacket(inboundBuffer, inboundBuffer.length)
+      socket.receive(inbound)
+
+      val received = inbound.getData.take(inbound.getLength)
+      received.sameElements(ProbePayload)
     }.getOrElse(false)
