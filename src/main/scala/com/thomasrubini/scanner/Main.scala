@@ -10,7 +10,7 @@ import com.thomasrubini.scanner.client.ScanResult
 import com.thomasrubini.scanner.server.EchoServer
 
 object Main:
-  private val useColor = System.console() != null
+  private val useColor = System.getenv("NO_COLOR") == null
 
   private object Color:
     val Reset = if useColor then "\u001b[0m" else ""
