@@ -2,8 +2,8 @@
 
 A Scala CLI with two modes:
 
-    server - listens on a TCP/UDP port range and echoes payloads
-    client - scans a TCP/UDP port range and prints reachable ports
+- server - listens on a TCP/UDP port range and echoes payloads
+- client - scans a TCP/UDP port range and prints reachable ports
 
 Supports IPv4 and IPv6. Client also supports IP reachability checks.
 
