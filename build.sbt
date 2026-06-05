@@ -7,7 +7,7 @@ ThisBuild / scalaVersion := "3.3.3"
 lazy val root = (project in file("."))
   .enablePlugins(ScalaNativePlugin)
   .settings(
-    name := "scala-scanner",
+    name := "portaport",
     javacOptions ++= Seq("--release", "17"),
     scalacOptions ++= Seq(
       "-deprecation",
